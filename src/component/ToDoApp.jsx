@@ -2,42 +2,46 @@ import React from 'react';
 import "../App.css";
 import AddTask from "./AddTask";
 import TodoList from "./TodoList";
-import Header from "./Header";
+// import Header from "./Header";
 // import Search from './Search';
 // import Filter from './Filter';
 import uniqId from 'uniqid';
 import ThemeContext from '../contexts/ThemeContext';
 import { BLACK_THEME_BACKGROUND_COLOR, BLUE_THEME_BACKGROUND_COLOR } from '../constants/style';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
+import UserContext from '../contexts/UserContext';
+import LogIn from './LogIn';
 
 
-class Main extends React.Component {
+class ToDoApp extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             searchValue: "",
             inputValue: "",
             tasks: [],
-            theme: "black",
+            
             filterValue: "all"
         }
     }
  async componentDidMount(){
-     try{const todoRef = db.collection('todo-items');
-     const collection = await todoRef.get();
+
+     try{
+        const todoRef = db.collection('users').doc(auth.currentUser.uid);
+        const collection = await todoRef.get();
      // console.log(collection.docs); 
-     const tasksFromDb=[];
+    //     const tasksFromDb=[];
  
-     collection.docs.forEach(doc=>{
-         const task={
-             id: doc.id, 
-             ...doc.data()
-         };
-      tasksFromDb.push(task)
-     })
+    //     collection.docs.forEach(doc=>{
+    //      const task={
+    //          id: doc.id, 
+    //          ...doc.data()
+    //      };
+    //   tasksFromDb.push(task)
+    //  })
     
      this.setState({
-         tasks: tasksFromDb
+         tasks: collection.data().toDoItems
      })
 
      } catch(e) {
@@ -62,13 +66,17 @@ class Main extends React.Component {
     };
     handleClick = () => {
         const newData={
-            
+            id:uniqId(),
             name: this.state.inputValue,
             done: false,
             deleted: false,
         }
         const id=uniqId();
-        db.collection('todo-items').doc(id).set(newData)
+        db.collection('users').doc(auth.currentUser.uid).update(
+            {
+                email:auth.currentUser.email,
+                toDoItems: [...this.state.tasks,newData]
+            })
         .then(()=>{ 
             const newTasks = [...this.state.tasks];
             newTasks.push({
@@ -87,7 +95,7 @@ class Main extends React.Component {
         const newTasks = [...this.state.tasks];
         const current = newTasks.find(item => item.id === id);
         const currentIndex = newTasks.indexOf(current);
-        db.collection('todo-items').doc(id).update({
+        db.collection('users').doc(auth.currentUser.uid).collection('todo-items').update({
             done: !current.done 
         }).then(()=>{
             newTasks.splice(currentIndex, 1, {
@@ -103,7 +111,7 @@ class Main extends React.Component {
 
     };
     onTaskDelete = (id) => {
-        const exactRef = db.collection('todo-items').doc(id).delete()
+        const exactRef = db.collection('users').doc(auth.currentUser.uid).collection('todo-items').delete()
         .then( ()=>{  
             const newTasks = [...this.state.tasks];
             const currentIndex = newTasks.findIndex(item => item.id === id);
@@ -119,37 +127,33 @@ class Main extends React.Component {
      
     };
 
-    onThemeChange = (color) => {
-        if (this.state.theme !== color) {
-            this.setState({
-                theme: color
-            })
-        }
-    };
+    
 
 
     render() {
         const bgcolor = this.state.theme === 'black' ? BLACK_THEME_BACKGROUND_COLOR : BLUE_THEME_BACKGROUND_COLOR;
 
         return (
-            <ThemeContext.Provider value={this.state.theme}>
-                <div className="Main" style={{
-                    backgroundColor: bgcolor 
-                }}>
-                    <Header onThemeChange={this.onThemeChange} />
-                    <AddTask handleClick={this.handleClick} handleChange={this.handleChange}
-                        inputValue={this.state.inputValue} />
+            <div>
+                    <AddTask 
+                        handleClick={this.handleClick} 
+                        handleChange={this.handleChange}
+                        inputValue={this.state.inputValue}
+                         />
                     {/* <Search handleInput={this.handleInput} searchValue={this.state.searchValue} />
                     <Filter onFilterChange={this.onFilterChange} /> */}
-                    <TodoList onTaskDelete={this.onTaskDelete} onTaskToggle={this.onTaskToggle}
-                        tasks={this.state.tasks} searchValue={this.state.searchValue}
-                        filterValue={this.state.filterValue} />
-                </div>
-            </ThemeContext.Provider>
+                    <TodoList 
+                        onTaskDelete={this.onTaskDelete} 
+                        onTaskToggle={this.onTaskToggle}
+                        tasks={this.state.tasks}
+                        searchValue={this.state.searchValue}
+                        filterValue={this.state.filterValue}
+                         />
+                       </div>
         );
 
     }
 
 }
 
-export default Main;
+export default ToDoApp;

@@ -16,9 +16,12 @@ export default class TodoList extends React.Component {
                 {
                     validTasks.filter(task => task.name.includes(this.props.searchValue))
                         .map(task =>
-                            <TaskItem onTaskDelete={this.props.onTaskDelete}
-                                onTaskToggle={this.props.onTaskToggle} key={task.id} task={task} />
-                        )
+                            <TaskItem 
+                                onTaskDelete={this.props.onTaskDelete}
+                                onTaskToggle={this.props.onTaskToggle}
+                                key={task.id}
+                                task={task} />
+                            )
                 }
             </div>
         )

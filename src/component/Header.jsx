@@ -1,5 +1,6 @@
 import React from 'react';
 import { BLUE_THEME_COLOR, BLUE_THEME_BACKGROUND_COLOR, BLACK_THEME_COLOR, BLACK_THEME_BACKGROUND_COLOR } from '../constants/style';
+import { auth } from '../firebase';
 
 const headerStyle = {
   padding: 5,
@@ -20,10 +21,14 @@ const blackButtonStyle = {
 }
 
 export default function Header(props) {
+    const onLogOutClick=()=>{
+        auth.signOut().catch(e=>alert('somethogn wrong'))
+    }
   return (
     <header style={headerStyle}>
       <button onClick={() => props.onThemeChange('blue')} style={blueButtonStyle}>Blue</button>
       <button onClick={() => props.onThemeChange('black')} style={blackButtonStyle}>Black</button>
+      <button onClick={onLogOutClick}>Logout</button>
     </header>
   )
 }
